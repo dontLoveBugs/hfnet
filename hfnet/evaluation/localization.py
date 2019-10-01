@@ -19,6 +19,8 @@ from .cpp_localization import CppLocalization
 from hfnet.utils.tools import Timer
 from hfnet.settings import DATA_PATH
 
+import joblib
+
 sys.modules['hfnet.evaluation.db_management'] = db_management  # backward comp
 
 
@@ -69,8 +71,13 @@ class Localization:
                     with open(global_path, 'wb') as f:
                         pickle.dump((self.db_names, global_descriptors), f)
                 if not ok_local:
+                    # with open(local_path, 'wb') as f:
+                    #     pickle.dump(local_db, f)
+                    """
+                        when saving big file, pickle may cause Memery error.
+                    """
                     with open(local_path, 'wb') as f:
-                        pickle.dump(local_db, f)
+                        joblib.dump(local_db, f)
             else:
                 raise IOError('Database files do not exist, '
                               'build must be enabled with --build_db')
@@ -83,7 +90,8 @@ class Localization:
             mapping = np.array([name_to_id[n] for n in self.db_names])
             global_descriptors = global_descriptors[mapping]
         with open(local_path, 'rb') as f:
-            local_db = pickle.load(f)
+            # local_db = pickle.load(f)
+            local_db = joblib.load(f)
 
         logging.info('Indexing descriptors')
         self.global_descriptors, self.global_transform = preprocess_globaldb(
