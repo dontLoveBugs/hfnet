@@ -108,9 +108,9 @@ class SuperPointFrontend:
         grid = np.zeros((H, W)).astype(int) # Track NMS data.
         inds = np.zeros((H, W)).astype(int) # Store indices of points.
         # Sort by confidence and round to nearest int.
-        inds1 = np.argsort(-in_corners[2,:])
-        corners = in_corners[:,inds1]
-        rcorners = corners[:2,:].round().astype(int) # Rounded corners.
+        inds1 = np.argsort(-in_corners[2, :])
+        corners = in_corners[:, inds1]
+        rcorners = corners[:2, :].round().astype(int) # Rounded corners.
         # Check for edge case of 0 or 1 corners.
         if rcorners.shape[1] == 0:
             return np.zeros((3,0)).astype(int), np.zeros(0).astype(int)
@@ -127,7 +127,7 @@ class SuperPointFrontend:
         # Iterate through points, highest to lowest conf, suppress neighborhood.
         count = 0
         for i, rc in enumerate(rcorners.T):
-          # Account for top and left padding.
+            # Account for top and left padding.
             pt = (rc[0]+pad, rc[1]+pad)
             if grid[pt[1], pt[0]] == 1: # If not yet suppressed.
                 grid[pt[1]-pad:pt[1]+pad+1, pt[0]-pad:pt[0]+pad+1] = 0
@@ -146,7 +146,7 @@ class SuperPointFrontend:
 
     def run(self, image):
         H, W, _ = image.shape
-        inp = torch.from_numpy(image[np.newaxis, np.newaxis, :, :, 0])/255
+        inp = torch.from_numpy(image[np.newaxis, np.newaxis, :, :, 0]) / 255
         outs = self.net.forward(inp.cuda())
         semi, coarse_desc = outs[0], outs[1]
         semi = semi.data.cpu().numpy().squeeze()
@@ -164,7 +164,7 @@ class SuperPointFrontend:
 
         xs, ys = np.where(heatmap >= self.config['detector_threshold'])
         pts = np.zeros((3, len(xs)))  # Populate point data sized 3xN.
-        D = coarse_desc.shape[1]
+        D = coarse_desc.shape[1]  # dim of descriptor
         if len(xs) > 0:
             pts[0, :] = ys
             pts[1, :] = xs
@@ -185,6 +185,9 @@ class SuperPointFrontend:
 
             if self.config['num_keypoints']:
                 pts = pts[:, :self.config['num_keypoints']]
+                """
+                choose the biggest N keypoints
+                """
 
             samp_pts = torch.from_numpy(pts[:2, :].copy())
             samp_pts[0, :] /= (W - 1.)
@@ -192,22 +195,22 @@ class SuperPointFrontend:
             samp_pts = samp_pts * 2 - 1
 
             samp_pts = samp_pts.transpose(0, 1).contiguous()
-            samp_pts = samp_pts.view(1, 1, -1, 2)
+            samp_pts = samp_pts.view(1, 1, -1, 2)  # 1x1xNx2
             samp_pts = samp_pts.float().cuda()
             descriptors = torch.nn.functional.grid_sample(coarse_desc, samp_pts)
             norm = torch.norm(descriptors, p=2, dim=1, keepdim=True)
-            descriptors = descriptors / norm
+            descriptors = descriptors / norm   # -1~1
             descriptors = descriptors.detach().cpu().numpy().reshape(D, -1)
         else:
             descriptors = np.zeros((D, 0))
 
         descriptor_map = coarse_desc.detach().cpu().numpy()[0]
 
-        ret = {'keypoints': pts[:2].T.astype(np.int),
-               'local_descriptor_map': np.rollaxis(descriptor_map, 0, 3),
-               'local_descriptors': descriptors.T,
+        ret = {'keypoints': pts[:2].T.astype(np.int), # N X 2
+               'local_descriptor_map': np.rollaxis(descriptor_map, 0, 3), #
+               'local_descriptors': descriptors.T,  # N x D
                'dense_scores': np.rollaxis(dense, 0, 3),
-               'scores': pts[2]}
+               'scores': pts[2]}   # N
         return ret
 
 
