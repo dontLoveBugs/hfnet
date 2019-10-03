@@ -62,6 +62,9 @@ def build_localization_dbs(db_ids, images, cameras,
     global_descriptors = None
     local_db = []
 
+    print('config local:', config_local)
+    # print('images:', images)
+
     db_iter = dummy_iter(db_ids, images, cameras)
     for i, (image_id, data) in tqdm(enumerate(zip(db_ids, db_iter))):
         # Global
@@ -105,7 +108,7 @@ def build_localization_dbs(db_ids, images, cameras,
 
             local_db.append(
                 LocalDbItem(db_item.point3D_ids[valid], desc, kpts))
-
+    print('local db length：', len(local_db), len(db_ids))
     local_db = dict(zip(db_ids, local_db))
     return global_descriptors, local_db
 

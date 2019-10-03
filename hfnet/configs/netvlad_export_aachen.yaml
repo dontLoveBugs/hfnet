@@ -1,6 +1,6 @@
 data:
     name: 'aachen'
-    load_db: false
+    load_db: true
     load_queries: true
     resize_max: 960
 model:

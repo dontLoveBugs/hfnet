@@ -213,10 +213,12 @@ class SuperPointFrontend:
 
 class SuperPointPytorch:
     def __init__(self, data_shape=None, **config):
+        # print('super point config:', config)
         self.net = SuperPointFrontend(config)
 
     def load(self, checkpoint_path):
-        pass
+        # print('testing load function, checkpoint path:', checkpoint_path)
+        # pass
         self.net.net.load_state_dict(torch.load(checkpoint_path))
 
     def predict(self, data, keys='*'):

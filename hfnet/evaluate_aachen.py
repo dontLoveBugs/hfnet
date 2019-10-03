@@ -145,12 +145,13 @@ if __name__ == '__main__':
         yaml.dump(output, f, default_flow_style=False)
 
     if args.export_poses:
-        poses_path = Path(output_dir, f'{args.eval_name}_poses.txt')
-        with open(poses_path, 'w') as f:
-            for query, result in zip(queries, results):
-                query_T_w = np.linalg.inv(result.T)
-                qvec_nvm = list(Quaternion(matrix=query_T_w))
-                pos_nvm = query_T_w[:3, 3].tolist()
-                line = f'{Path(query.name).name}'
-                line += ' ' + ' '.join(map(str, qvec_nvm+pos_nvm))
-                f.write(line+'\n')
+            poses_path = Path(output_dir, f'{args.eval_name}_poses.txt')
+            with open(poses_path, 'w') as f:
+                for query, result in zip(queries, results):
+                    query_T_w = np.linalg.inv(result.T)
+                    qvec_nvm = list(Quaternion(matrix=query_T_w))
+                    pos_nvm = query_T_w[:3, 3].tolist()
+                    line = f'{Path(query.name).name}'
+                    line += ' ' + ' '.join(map(str, qvec_nvm+pos_nvm))
+                    f.write(line+'\n')
+

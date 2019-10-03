@@ -2,6 +2,7 @@ import numpy as np
 import logging
 from pathlib import Path
 import pickle
+import joblib
 import sys
 from tqdm import tqdm
 
@@ -55,8 +56,14 @@ class Localization:
         global_path = Path(base_path, 'databases', config['global']['db_name'])
         local_path = Path(base_path, 'databases', config['local']['db_name'])
 
+        # logging.info('global path:', global_path)
+        # logging.info('local path:', local_path)
+
         # Build databases if necessary
         ok_global, ok_local = global_path.exists(), local_path.exists()
+
+        # logging.info('ok global or local:', ok_global, ok_local)
+
         if not ok_global or not ok_local:
             if build_db:
                 logging.info('Starting to build databases: '
@@ -65,25 +72,31 @@ class Localization:
                     self.db_ids, self.images, self.cameras,
                     config_global=None if ok_global else config['global'],
                     config_local=None if ok_local else config['local'])
+
+                logging.info('local db:', local_db)
                 if not ok_global:
                     with open(global_path, 'wb') as f:
                         pickle.dump((self.db_names, global_descriptors), f)
                 if not ok_local:
                     with open(local_path, 'wb') as f:
-                        pickle.dump(local_db, f)
+                        # pickle.dump(local_db, f)
+                        joblib.dump(local_db, f)
             else:
                 raise IOError('Database files do not exist, '
                               'build must be enabled with --build_db')
 
         logging.info('Importing global and local databases')
         with open(global_path, 'rb') as f:
+            # print('global path:', global_path)
             globaldb_names, global_descriptors = pickle.load(f)
             assert isinstance(globaldb_names[0], str)
             name_to_id = {name: i for i, name in enumerate(globaldb_names)}
             mapping = np.array([name_to_id[n] for n in self.db_names])
             global_descriptors = global_descriptors[mapping]
         with open(local_path, 'rb') as f:
-            local_db = pickle.load(f)
+            # logging.info('local path:', local_path)
+            # local_db = pickle.load(f)
+            local_db = joblib.load(f)
 
         logging.info('Indexing descriptors')
         self.global_descriptors, self.global_transform = preprocess_globaldb(

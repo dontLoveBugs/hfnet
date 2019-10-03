@@ -53,13 +53,20 @@ if __name__ == '__main__':
             logging.info('No weights provided.')
     logging.info(f'Starting export with configuration:\n{pformat(config)}')
 
+    # logging.info('##1')
+
     with get_model(config['model']['name'])(
             data_shape={'image': [None, None, None, config['model']['image_channels']]},
             **config['model']) as net:
         if checkpoint_path is not None:
             net.load(str(checkpoint_path))
+
+        # logging.info('##3')
+
         dataset = get_dataset(config['data']['name'])(**config['data'])
         test_set = dataset.get_test_set()
+
+        # logging.info('##2')
 
         for data in tqdm(test_set):
             predictions = net.predict(data, keys=keys)
